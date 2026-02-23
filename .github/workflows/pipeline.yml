@@ -28,6 +28,10 @@ on:
         required: false
         default: false
         type: boolean
+      var_file:
+        description: "Optional Terraform variables file path"
+        required: false
+        type: string
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
 jobs:
@@ -263,7 +267,11 @@ jobs:
 
       - name: Terraform Apply
         run: |
-          terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve
+          VAR_FILE_ARGS=""
+          if [ -n "${{ inputs.var_file }}" ]; then
+            VAR_FILE_ARGS="-var-file=${{ inputs.var_file }}"
+          fi
+          terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
       - name: Close PR via CLI
         run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished applying Terraform changes. Closing the PR."
         env:

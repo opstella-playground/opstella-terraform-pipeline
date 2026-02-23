@@ -3,7 +3,7 @@
 
 source "$(dirname "$0")/.env"
 
-REPO="GGital/terraform-opstella"
+REPO="GGital/terraform-opstella-test"
 INTERVAL=30
 MAX_RETRIES=20
 RETRY_COUNT=0
