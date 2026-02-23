@@ -140,12 +140,8 @@ jobs:
       - name: Run tflint
         run: |
           cd ${{ inputs.terraform_directory }}
-          VAR_FILE_ARGS=""
-          if [ -n "${{ inputs.var_file }}" ]; then
-            VAR_FILE_ARGS="-var-file=${{ inputs.var_file }}"
-          fi
-          tflint --init $VAR_FILE_ARGS
-          tflint -f compact $VAR_FILE_ARGS
+          tflint --init --force
+          tflint -f compact --force
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -211,7 +207,12 @@ jobs:
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
 
       - name: Terraform Plan
-        run: terraform -chdir=${{ inputs.terraform_directory }} plan -out=tfplan.binary || exit 1
+        run: |
+          VAR_FILE_ARGS=""
+          if [ -n "${{ inputs.var_file }}" ]; then
+            VAR_FILE_ARGS="-var-file=${{ inputs.var_file }}"
+          fi
+          terraform -chdir=${{ inputs.terraform_directory }} plan -out=tfplan.binary $VAR_FILE_ARGS || exit 1
       - name: Terraform form Plan Output
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
