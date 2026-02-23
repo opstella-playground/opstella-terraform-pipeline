@@ -176,8 +176,10 @@ jobs:
           # trivyignores: .trivyignore
           output: ${{ inputs.trivy_iac_report_filename }}
           exit-code: ${{ inputs.allow_failed_security_gate == true && '0' || '1' }}
-          severity:
-            "HIGH,CRITICAL"
+          severity: "HIGH,CRITICAL"
+        env:
+          GIT_SSH_COMMAND:
+            "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
             # ${{ inputs.sourcecode_repo }}-manifest.yaml
       - name: Upload Trivy IaC Report
@@ -215,7 +217,9 @@ jobs:
         run: |
           VAR_FILE_ARGS=""
           if [ -n "${{ inputs.var_file }}" ]; then
-            VAR_FILE_ARGS="-var-file=${{ inputs.var_file }}"
+            # Use absolute path from workspace root
+            VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
+            VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
           terraform -chdir=${{ inputs.terraform_directory }} plan -out=tfplan.binary $VAR_FILE_ARGS || exit 1
       - name: Terraform form Plan Output
@@ -294,7 +298,9 @@ jobs:
         run: |
           VAR_FILE_ARGS=""
           if [ -n "${{ inputs.var_file }}" ]; then
-            VAR_FILE_ARGS="-var-file=${{ inputs.var_file }}"
+            # Use absolute path from workspace root
+            VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
+            VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
           terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
       - name: Close PR via CLI
