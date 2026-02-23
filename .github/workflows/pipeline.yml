@@ -60,6 +60,10 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Configure Git credentials
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/"
+
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init -input=false
