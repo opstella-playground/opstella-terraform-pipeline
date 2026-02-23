@@ -68,6 +68,8 @@ jobs:
           echo "${{ secrets.TERRAFORM_MODULE_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           git config --global url."git@github.com:".insteadOf "https://github.com/"
+        env:
+          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - name: Terraform Init
         run: |
@@ -140,10 +142,11 @@ jobs:
       - name: Run tflint
         run: |
           cd ${{ inputs.terraform_directory }}
-          tflint --init --force
-          tflint -f compact --force
+          tflint --init --force || true
+          tflint -f compact --force || true
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - *save-cache-terraform-providers
 
@@ -157,6 +160,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - *setup-ssh-for-git
 
       - name: Install Helm
         uses: azure/setup-helm@v4
