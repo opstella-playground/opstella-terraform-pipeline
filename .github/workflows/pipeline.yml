@@ -140,8 +140,12 @@ jobs:
       - name: Run tflint
         run: |
           cd ${{ inputs.terraform_directory }}
-          tflint --init
-          tflint -f compact
+          VAR_FILE_ARGS=""
+          if [ -n "${{ inputs.var_file }}" ]; then
+            VAR_FILE_ARGS="-v=${{ inputs.var_file }}"
+          fi
+          tflint --init $VAR_FILE_ARGS
+          tflint -f compact $VAR_FILE_ARGS
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
