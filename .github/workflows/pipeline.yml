@@ -141,7 +141,7 @@ jobs:
         run: |
           cd ${{ inputs.terraform_directory }}
           tflint --init
-          tflint -f compact || (echo "Error: TFLint found issues." && exit 1)
+          tflint -f compact
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
