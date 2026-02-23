@@ -60,9 +60,13 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Configure Git credentials
+      - name: Setup SSH for Git module access
         run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          echo "${{ secrets.TERRAFORM_MODULE_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
 
       - name: Terraform Init
         run: |
