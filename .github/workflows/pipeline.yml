@@ -60,7 +60,8 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Setup SSH for Git module access
+      - &setup-ssh-for-git
+        name: Setup SSH for Git module access
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
@@ -99,6 +100,7 @@ jobs:
 
       - *restore-cache-terraform-providers
 
+      - *setup-ssh-for-git
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -129,6 +131,8 @@ jobs:
           terraform_version: 1.5.7
 
       - *restore-cache-terraform-providers
+
+      - *setup-ssh-for-git
       - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -191,6 +195,8 @@ jobs:
       - *create-plugin-cache-dir
 
       - *restore-cache-terraform-providers
+
+      - *setup-ssh-for-git
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -269,6 +275,7 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - *setup-ssh-for-git
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init
