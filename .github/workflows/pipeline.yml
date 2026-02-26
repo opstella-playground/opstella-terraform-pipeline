@@ -79,6 +79,21 @@ jobs:
         id: fmt
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} fmt -recursive
+      - name: Get Runner Public IP
+        id: get_ip
+        run: |
+          # Fetch the IP using a public service
+          PUBLIC_IP=$(curl -s https://ifconfig.me)
+
+          # Set it as an output variable for later steps
+          echo "ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+
+          # Print it to the logs for debugging
+          echo "The runner's public IP is: $PUBLIC_IP"
+
+      # Example: Using the IP in a subsequent step
+      - name: Use the IP
+        run: echo "The IP we found was ${{ steps.get_ip.outputs.ip }}"
 
       - &save-cache-terraform-providers
         name: Save Terraform Cache
