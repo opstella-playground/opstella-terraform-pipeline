@@ -182,7 +182,7 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Generate Trivy IaC Vulnerability Report
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: "fs"
           scan-ref: .
