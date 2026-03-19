@@ -59,6 +59,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
       - &setup-ssh-for-git
         name: Setup SSH for Git module access
@@ -122,6 +123,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
       - name: Terraform Validate
@@ -146,6 +148,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
       - *restore-cache-terraform-providers
 
@@ -224,6 +227,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
@@ -329,6 +333,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
       - *setup-ssh-for-git
       - name: Terraform Init
