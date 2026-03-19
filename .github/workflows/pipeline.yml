@@ -274,7 +274,7 @@ jobs:
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
         with:
-          name: terraform-plan-output-md
+          name: terraform-plan-output
           path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
