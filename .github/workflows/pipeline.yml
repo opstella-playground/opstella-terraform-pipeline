@@ -244,7 +244,6 @@ jobs:
         run: |
           docker run -v $(pwd):/data oocx/tfplan2md \
             ${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_plan_output_filename }}.md
-        working-directory: ./terraform
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
