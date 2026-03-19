@@ -244,7 +244,7 @@ jobs:
         run: ls -R .
       - name: Generate markdown report
         run: |
-          docker run -v $(pwd):/. oocx/tfplan2md \
+          docker run -v $(pwd):$(pwd) oocx/tfplan2md \
             ${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_plan_output_filename }}.md
 
       - name: Upload Terraform Plan Output
