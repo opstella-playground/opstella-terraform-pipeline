@@ -179,7 +179,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *setup-ssh-for-git
+      # - *setup-ssh-for-git
 
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -221,7 +221,7 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - *setup-ssh-for-git
+      # - *setup-ssh-for-git
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -335,7 +335,7 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      - *setup-ssh-for-git
+      # - *setup-ssh-for-git
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init
