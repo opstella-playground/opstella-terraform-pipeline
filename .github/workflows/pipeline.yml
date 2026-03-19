@@ -246,11 +246,14 @@ jobs:
         run: ls -R ${{ inputs.terraform_directory }}
       - name: Install tfplan2md
         run: |
-          brew tap oocx/tfplan2md
-          brew install tfplan2md
+          VERSION="1.x.x"
+          PLATFORM="linux-x64"
+          wget https://github.com/oocx/tfplan2md/releases/download/v${VERSION}/tfplan2md_${VERSION}_${PLATFORM}.tar.gz
+          tar -xzf tfplan2md_${VERSION}_${PLATFORM}.tar.gz
+          ./tfplan2md --help
       - name: Generate Markdown Report from Terraform Plan
         run: |
-          tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+          ./tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
           ls -l "${{ inputs.terraform_plan_output_filename }}.md"
         working-directory: ./${{ inputs.terraform_directory }}
 
