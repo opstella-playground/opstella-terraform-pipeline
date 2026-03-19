@@ -236,11 +236,11 @@ jobs:
             VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
             VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
-          terraform plan -out=tfplan.binary $VAR_FILE_ARGS || exit 1
+          terraform plan -out=plan.tfplan $VAR_FILE_ARGS || exit 1
         working-directory: ./${{ inputs.terraform_directory }}
       - name: Terraform form Plan Output
         run: |
-          terraform show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
+          terraform show -json plan.tfplan > "${{ inputs.terraform_plan_output_filename }}.json"
         working-directory: ./${{ inputs.terraform_directory }}
       - name: list files
         run: ls -R ${{ inputs.terraform_directory }}
