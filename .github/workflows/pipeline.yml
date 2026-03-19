@@ -239,19 +239,19 @@ jobs:
           terraform -chdir=${{ inputs.terraform_directory }} plan -out=tfplan.binary $VAR_FILE_ARGS || exit 1
       - name: Terraform form Plan Output
         run: |
-          terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
+          terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.json"
       - name: list files
-        run: ls -R .
+        run: ls -R ${{ inputs.terraform_directory }}
       - name: Generate markdown report
         run: |
-          docker run -v $(pwd):$(pwd) oocx/tfplan2md \
-            ${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_plan_output_filename }}.md
+          docker run -v $(pwd):/${{ inputs.terraform_directory }} oocx/tfplan2md \
+            ${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.md
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output
-          path: "${{ inputs.terraform_plan_output_filename }}.md"
+          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
       - *save-cache-terraform-providers
