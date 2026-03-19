@@ -251,6 +251,7 @@ jobs:
           wget https://github.com/oocx/tfplan2md/releases/download/v${VERSION}/tfplan2md_${VERSION}_${PLATFORM}.tar.gz
           tar -xzf tfplan2md_${VERSION}_${PLATFORM}.tar.gz
           ./tfplan2md --help
+          od -c -N 10 ${{ inputs.terraform_plan_output_filename }}.json
           ./tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
           ls -l "${{ inputs.terraform_plan_output_filename }}.md"
         working-directory: ./${{ inputs.terraform_directory }}
