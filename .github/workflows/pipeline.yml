@@ -251,11 +251,14 @@ jobs:
           wget https://github.com/oocx/tfplan2md/releases/download/v${VERSION}/tfplan2md_${VERSION}_${PLATFORM}.tar.gz
           tar -xzf tfplan2md_${VERSION}_${PLATFORM}.tar.gz
           ./tfplan2md --help
-      - name: Generate Markdown Report from Terraform Plan
-        run: |
-          tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+          ./tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
           ls -l "${{ inputs.terraform_plan_output_filename }}.md"
         working-directory: ./${{ inputs.terraform_directory }}
+      # - name: Generate Markdown Report from Terraform Plan
+      #   run: |
+      #     tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+      #     ls -l "${{ inputs.terraform_plan_output_filename }}.md"
+      #   working-directory: ./${{ inputs.terraform_directory }}
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
