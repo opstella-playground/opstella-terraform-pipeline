@@ -244,17 +244,21 @@ jobs:
         working-directory: ./${{ inputs.terraform_directory }}
       - name: list files
         run: ls -R ${{ inputs.terraform_directory }}
-      - name: Generate markdown report
+      - name: Install tfplan2md
         run: |
-          docker run -v $(pwd):/data oocx/tfplan2md \
-            /data/${{ inputs.terraform_plan_output_filename }}.json --output /data/${{ inputs.terraform_plan_output_filename }}.md
+          brew tap oocx/tfplan2md
+          brew install tfplan2md
+      - name: Generate Markdown Report from Terraform Plan
+        run: |
+          tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+          ls -l "${{ inputs.terraform_plan_output_filename }}.md"
         working-directory: ./${{ inputs.terraform_directory }}
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output
-          path: "${{ inputs.terraform_directory }}/data/${{ inputs.terraform_plan_output_filename }}.md"
+          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
       - *save-cache-terraform-providers
