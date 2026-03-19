@@ -244,6 +244,12 @@ jobs:
         working-directory: ./${{ inputs.terraform_directory }}
       - name: list files
         run: ls -R ${{ inputs.terraform_directory }}
+      - name: Upload Terraform Plan Output
+        uses: actions/upload-artifact@v6
+        with:
+          name: terraform-plan-output
+          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.json"
+          retention-days: ${{ inputs.report_retention_days }}
       - name: Install tfplan2md
         run: |
           VERSION="1.40.0"
