@@ -246,7 +246,7 @@ jobs:
         run: ls -R ${{ inputs.terraform_directory }}
       - name: Install tfplan2md
         run: |
-          VERSION="1.x.x"
+          VERSION="1.40.0"
           PLATFORM="linux-x64"
           wget https://github.com/oocx/tfplan2md/releases/download/v${VERSION}/tfplan2md_${VERSION}_${PLATFORM}.tar.gz
           tar -xzf tfplan2md_${VERSION}_${PLATFORM}.tar.gz
