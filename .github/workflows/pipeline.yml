@@ -253,7 +253,7 @@ jobs:
           ./tfplan2md --help
       - name: Generate Markdown Report from Terraform Plan
         run: |
-          ./tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+          tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
           ls -l "${{ inputs.terraform_plan_output_filename }}.md"
         working-directory: ./${{ inputs.terraform_directory }}
 
