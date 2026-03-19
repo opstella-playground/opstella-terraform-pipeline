@@ -241,12 +241,17 @@ jobs:
       - name: Terraform form Plan Output
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
+      - name: Generate markdown report
+        run: |
+          docker run -v $(pwd):/data oocx/tfplan2md \
+            ${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_plan_output_filename }}.md
+        working-directory: ./terraform
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output
-          path: "${{ inputs.terraform_plan_output_filename }}.json"
+          path: "${{ inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
       - *save-cache-terraform-providers
