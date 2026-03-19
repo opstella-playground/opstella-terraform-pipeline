@@ -241,7 +241,7 @@ jobs:
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
       - name: list files
-        run: ls -R $.
+        run: ls -R .
       - name: Generate markdown report
         run: |
           docker run -v $(pwd):/data oocx/tfplan2md \
