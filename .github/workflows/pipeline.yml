@@ -241,11 +241,11 @@ jobs:
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
       - name: list files
-        run: ls -R ${{ inputs.terraform_directory }}
+        run: ls -R $.
       - name: Generate markdown report
         run: |
           docker run -v $(pwd):/data oocx/tfplan2md \
-            ${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_plan_output_filename }}.md
+            ${{ inputs.terraform_plan_output_filename }}.json --output ${{ inputs.terraform_plan_output_filename }}.md
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
