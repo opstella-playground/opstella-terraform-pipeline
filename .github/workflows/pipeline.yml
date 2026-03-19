@@ -236,21 +236,25 @@ jobs:
             VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
             VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
-          terraform -chdir=${{ inputs.terraform_directory }} plan -out=tfplan.binary $VAR_FILE_ARGS || exit 1
+          terraform plan -out=tfplan.binary $VAR_FILE_ARGS || exit 1
+        working-directory: ./${{ inputs.terraform_directory }}
       - name: Terraform form Plan Output
         run: |
-          terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
+          terraform show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
+        working-directory: ./${{ inputs.terraform_directory }}
       - name: list files
         run: ls -R ${{ inputs.terraform_directory }}
       - name: Generate markdown report
         run: |
-          terraform show -json ${{ inputs.terraform_directory }}/tfplan.binary | docker run -i -v $(pwd):/data oocx/tfplan2md --output /data/${{ inputs.terraform_plan_output_filename }}.md
+          docker run -v $(pwd):/data oocx/tfplan2md \
+            /data/${{ inputs.terraform_plan_output_filename }}.json --output /data/${{ inputs.terraform_plan_output_filename }}.md
+        working-directory: ./${{ inputs.terraform_directory }}
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output
-          path: "data/${{ inputs.terraform_plan_output_filename }}.md"
+          path: "${{ inputs.terraform_directory }}/data/${{ inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
       - *save-cache-terraform-providers
