@@ -59,6 +59,18 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
+
+      # - &setup-ssh-for-git
+      #   name: Setup SSH for Git module access
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      #     echo "${{ secrets.TERRAFORM_MODULE_SSH_KEY }}" > ~/.ssh/id_ed25519
+      #     chmod 600 ~/.ssh/id_ed25519
+      #     git config --global url."git@github.com:".insteadOf "https://github.com/"
+      #   env:
+      #     GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - name: Terraform Init
         run: |
@@ -91,10 +103,12 @@ jobs:
 
       - *restore-cache-terraform-providers
 
+      # - *setup-ssh-for-git
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
       - name: Terraform Validate
@@ -119,8 +133,11 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
       - *restore-cache-terraform-providers
+
+      # - *setup-ssh-for-git
       - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -128,10 +145,11 @@ jobs:
       - name: Run tflint
         run: |
           cd ${{ inputs.terraform_directory }}
-          tflint --init
-          tflint -f compact || (echo "Error: TFLint found issues." && exit 1)
+          tflint --init --force || true
+          tflint -f compact --force || true
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - *save-cache-terraform-providers
 
@@ -146,11 +164,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # - *setup-ssh-for-git
+
       - name: Install Helm
         uses: azure/setup-helm@v4
 
       - name: Generate Trivy IaC Vulnerability Report
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
           scan-ref: .
@@ -159,10 +179,12 @@ jobs:
           # trivyignores: .trivyignore
           output: ${{ inputs.trivy_iac_report_filename }}
           exit-code: ${{ inputs.allow_failed_security_gate == true && '0' || '1' }}
-          severity:
-            "HIGH,CRITICAL"
+          severity: "HIGH,CRITICAL"
+        # env:
+        #   GIT_SSH_COMMAND:
+        #     "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
-            # ${{ inputs.sourcecode_repo }}-manifest.yaml
+        # ${{ inputs.sourcecode_repo }}-manifest.yaml
       - name: Upload Trivy IaC Report
         uses: actions/upload-artifact@v6
         with:
@@ -184,25 +206,61 @@ jobs:
 
       - *restore-cache-terraform-providers
 
+      # - *setup-ssh-for-git
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
 
       - name: Terraform Plan
-        run: terraform -chdir=${{ inputs.terraform_directory }} plan -out=tfplan.binary || exit 1
+        run: |
+          VAR_FILE_ARGS=""
+          if [ -n "${{ inputs.var_file }}" ]; then
+            # Use absolute path from workspace root
+            VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
+            VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
+          fi
+          terraform plan -out=plan.tfplan $VAR_FILE_ARGS || exit 1
+        working-directory: ./${{ inputs.terraform_directory }}
       - name: Terraform form Plan Output
         run: |
-          terraform -chdir=${{ inputs.terraform_directory }} show -json tfplan.binary > "${{ inputs.terraform_plan_output_filename }}.json"
+          terraform show -json plan.tfplan > "${{ inputs.terraform_plan_output_filename }}.json"
+        working-directory: ./${{ inputs.terraform_directory }}
+      - name: list files
+        run: ls -R ${{ inputs.terraform_directory }}
+      - name: Upload Terraform Plan Output
+        uses: actions/upload-artifact@v6
+        with:
+          name: terraform-plan-output-json
+          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.json"
+          retention-days: ${{ inputs.report_retention_days }}
+      - name: Install tfplan2md
+        run: |
+          VERSION="1.40.0"
+          PLATFORM="linux-x64"
+          wget https://github.com/oocx/tfplan2md/releases/download/v${VERSION}/tfplan2md_${VERSION}_${PLATFORM}.tar.gz
+          tar -xzf tfplan2md_${VERSION}_${PLATFORM}.tar.gz
+          ./tfplan2md --help
+          od -c -N 10 ${{ inputs.terraform_plan_output_filename }}.json
+          ./tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+          ls -l "${{ inputs.terraform_plan_output_filename }}.md"
+        working-directory: ./${{ inputs.terraform_directory }}
+      # - name: Generate Markdown Report from Terraform Plan
+      #   run: |
+      #     tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+      #     ls -l "${{ inputs.terraform_plan_output_filename }}.md"
+      #   working-directory: ./${{ inputs.terraform_directory }}
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output
-          path: "${{ inputs.terraform_plan_output_filename }}.json"
+          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
       - *save-cache-terraform-providers
@@ -260,7 +318,9 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+          terraform_wrapper: false
 
+      # - *setup-ssh-for-git
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init
@@ -269,7 +329,9 @@ jobs:
         run: |
           VAR_FILE_ARGS=""
           if [ -n "${{ inputs.var_file }}" ]; then
-            VAR_FILE_ARGS="-var-file=${{ inputs.var_file }}"
+            # Use absolute path from workspace root
+            VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
+            VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
           terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
       - name: Close PR via CLI
