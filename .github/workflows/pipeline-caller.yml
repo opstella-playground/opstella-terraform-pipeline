@@ -17,9 +17,13 @@ jobs:
             echo "GH_TOKEN secret is set."
           fi
   pipeline:
-    uses: ./.github/workflows/pipeline.yml
+    uses: opstella-playground/terraform-opstella/.github/workflows/pipeline.yml@main
     needs: check-secret-and-variables
     secrets: inherit
     permissions:
       issues: write
       contents: read
+    with:
+      terraform_directory: "terraform"
+      allow_failed_security_gate: true
+    # var_file: 'terraform/values.tfvars'
