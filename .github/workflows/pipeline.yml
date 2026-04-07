@@ -334,6 +334,23 @@ jobs:
             VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
           terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
+      - name: Generate Cluster Metadata Artifact
+        run: |
+          cd ${{ inputs.terraform_directory }}
+          terraform output -json | jq '{
+            name: .aks_name.value,
+            host: .aks_host.value,
+            port: .aks_port.value,
+            "api-key": .aks_api_key.value,
+            "ca-cert": .aks_ca_cert.value,
+          }' > cluster-metadata.json
+
+      - name: Upload Metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: aks-cluster-info
+          path: ${{ inputs.terraform_directory }}/cluster-metadata.json
+          retention-days: 1
       - name: Close PR via CLI
         run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished applying Terraform changes. Closing the PR."
         env:
