@@ -373,3 +373,5 @@ jobs:
         run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished applying Terraform changes. Closing the PR."
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+          #
