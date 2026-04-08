@@ -61,16 +61,11 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      # - &setup-ssh-for-git
-      #   name: Setup SSH for Git module access
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-      #     echo "${{ secrets.TERRAFORM_MODULE_SSH_KEY }}" > ~/.ssh/id_ed25519
-      #     chmod 600 ~/.ssh/id_ed25519
-      #     git config --global url."git@github.com:".insteadOf "https://github.com/"
-      #   env:
-      #     GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
+      - name: Configure Git with GitHub PAT
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Terraform Init
         run: |
@@ -103,7 +98,12 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      # - *setup-ssh-for-git
+      - name: Configure Git with GitHub PAT
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -137,7 +137,12 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      # - *setup-ssh-for-git
+      - name: Configure Git with GitHub PAT
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -149,7 +154,6 @@ jobs:
           tflint -f compact --force || true
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - *save-cache-terraform-providers
 
@@ -164,7 +168,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - *setup-ssh-for-git
+      - name: Configure Git with GitHub PAT
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -206,7 +214,11 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      # - *setup-ssh-for-git
+      - name: Configure Git with GitHub PAT
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -320,7 +332,12 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      # - *setup-ssh-for-git
+      - name: Configure Git with GitHub PAT
+        run: |
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init
@@ -334,6 +351,24 @@ jobs:
             VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
           terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
+      - name: Hardcode Cluster Metadata for Testing
+        run: |
+          cat <<EOF > cluster-metadata.json
+          {
+            "name": "opstella-aks-prod-001",
+            "host": "https://opstella-aks-prod-001-dns-7b2a9e.hcp.eastus.azmk8s.io:443",
+            "port": 443,
+            "api-key": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ...",
+            "ca-cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t..."
+          }
+          EOF
+
+      - name: Upload Metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: aks-cluster-info
+          path: ${{ inputs.terraform_directory }}/cluster-metadata.json
+          retention-days: 14
       - name: Close PR via CLI
         run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished applying Terraform changes. Closing the PR."
         env:

@@ -19,7 +19,7 @@ jobs:
             echo "GH_TOKEN secret is set."
           fi
   pipeline:
-    uses: opstella-playground/terraform-opstella/.github/workflows/pipeline.yml@main
+    uses: opstella-playground/terraform-opstella/.github/workflows/pipeline.yml@mock-artifact
     needs: check-secret-and-variables
     secrets: inherit
     permissions:
