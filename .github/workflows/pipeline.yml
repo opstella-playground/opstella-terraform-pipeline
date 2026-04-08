@@ -366,7 +366,7 @@ jobs:
       - name: Upload Metadata
         uses: actions/upload-artifact@v4
         with:
-          name: aks-cluster-info
+          name: cluster-info-output
           path: ${{ inputs.terraform_directory }}/cluster-metadata.json
           retention-days: 14
       - name: Close PR via CLI
