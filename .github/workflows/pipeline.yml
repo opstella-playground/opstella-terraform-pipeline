@@ -61,11 +61,16 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      - name: Configure Git with GitHub PAT
-        run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      # - &setup-ssh-for-git
+      #   name: Setup SSH for Git module access
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      #     echo "${{ secrets.TERRAFORM_MODULE_SSH_KEY }}" > ~/.ssh/id_ed25519
+      #     chmod 600 ~/.ssh/id_ed25519
+      #     git config --global url."git@github.com:".insteadOf "https://github.com/"
+      #   env:
+      #     GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - name: Terraform Init
         run: |
@@ -98,12 +103,7 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - name: Configure Git with GitHub PAT
-        run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
+      # - *setup-ssh-for-git
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -137,12 +137,7 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - name: Configure Git with GitHub PAT
-        run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
+      # - *setup-ssh-for-git
       - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -154,6 +149,7 @@ jobs:
           tflint -f compact --force || true
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - *save-cache-terraform-providers
 
@@ -168,11 +164,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure Git with GitHub PAT
-        run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      # - *setup-ssh-for-git
 
       - name: Install Helm
         uses: azure/setup-helm@v4
@@ -214,11 +206,7 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - name: Configure Git with GitHub PAT
-        run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      # - *setup-ssh-for-git
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -332,12 +320,7 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      - name: Configure Git with GitHub PAT
-        run: |
-          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
+      # - *setup-ssh-for-git
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init
