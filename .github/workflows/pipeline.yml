@@ -104,7 +104,25 @@ jobs:
           git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - &bump-az-credential
+        name: Update Azure Credentials in Terraform Files
+        run: |
+          CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}"
+          SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
 
+          # Update tfvars - replace credential values while preserving other content
+          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.var_file }}"
+          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.var_file }}"
+          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.var_file }}"
+          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.var_file }}"
+
+          # Update provider.tf - replace credential values in backend block while preserving other content
+          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
+          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
+          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
+          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.terraform_directory }}/provider.tf"
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init -input=false
@@ -142,6 +160,7 @@ jobs:
         with:
           terraform_version: 1.5.7
           terraform_wrapper: false
+      - *bump-az-credential
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
       - name: Terraform Validate
@@ -182,7 +201,6 @@ jobs:
           tflint -f compact --force || true
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 
       - *save-cache-terraform-providers
 
@@ -244,27 +262,10 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
+      - *bump-az-credential
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
 
-      - name: Update Azure Credentials in Terraform Files
-        run: |
-          CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
-          CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}"
-          SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-          TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
-
-          # Update tfvars - replace credential values while preserving other content
-          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.var_file }}"
-
-          # Update provider.tf - replace credential values in backend block while preserving other content
-          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.terraform_directory }}/provider.tf"
       - name: Terraform Plan
         run: |
           VAR_FILE_ARGS=""
@@ -369,27 +370,12 @@ jobs:
           terraform_wrapper: false
 
       - *setup-token-for-git
+
+      - *bump-az-credential
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init
-      - name: Update Azure Credentials in Terraform Files
-        run: |
-          CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
-          CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}"
-          SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-          TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
 
-          # Update tfvars - replace credential values while preserving other content
-          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.var_file }}"
-
-          # Update provider.tf - replace credential values in backend block while preserving other content
-          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.terraform_directory }}/provider.tf"
       - name: Terraform Apply
         run: |
           VAR_FILE_ARGS=""
