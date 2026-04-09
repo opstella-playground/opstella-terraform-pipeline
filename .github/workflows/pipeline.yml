@@ -32,6 +32,22 @@ on:
         description: "Optional Terraform variables file path"
         required: false
         type: string
+    secrets:
+      GH_TOKEN:
+        description: "GitHub Token with repo access"
+        required: true
+      AZURE_CLIENT_ID:
+        description: "Azure Client ID"
+        required: true
+      AZURE_CLIENT_SECRET:
+        description: "Azure Client Secret"
+        required: true
+      AZURE_TENANT_ID:
+        description: "Azure Tenant ID"
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        description: "Azure Subscription ID"
+        required: true
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
 jobs:

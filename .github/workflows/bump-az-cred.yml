@@ -14,8 +14,17 @@ on:
         default: "terraform/provider.tf"
 
     secrets:
-      AZURE_CREDENTIALS:
-        description: "Azure credentials in JSON format"
+      AZURE_CLIENT_ID:
+        description: "Azure Client ID"
+        required: true
+      AZURE_CLIENT_SECRET:
+        description: "Azure Client Secret"
+        required: true
+      AZURE_TENANT_ID:
+        description: "Azure Tenant ID"
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        description: "Azure Subscription ID"
         required: true
 
 jobs:
@@ -25,15 +34,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Parse Azure Credentials and Update Files
+      - name: Update Azure Credentials in Terraform Files
         run: |
-          # Parse JSON credentials
-          CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
-          CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
-          SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')
-          TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+          # Use individual secrets
+          CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}"
+          SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
 
-          # Update dev.tfvars - replace credential values while preserving other content
+          # Update tfvars - replace credential values while preserving other content
           sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.tfvars_path }}"
           sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.tfvars_path }}"
           sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.tfvars_path }}"
