@@ -43,8 +43,8 @@ jobs:
           cat <<EOF > cluster-metadata.json
           {
             "name": "opstella-aks-prod-001",
-            "host": "https://opstella-aks-prod-001-dns-7b2a9e.hcp.eastus.azmk8s.io:443",
-            "port": 443,
+            "host": "https://opstella-aks-prod-001-dns-7b2a9e.hcp.eastus.azmk8s.io",
+            "port": "",
             "api-key": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ...",
             "ca-cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t..."
           }

@@ -1,0 +1,46 @@
+name: Bump Azure Credentials
+on:
+  workflow_call:
+    inputs:
+      tfvars_path:
+        description: "Path to dev.tfvars file"
+        required: false
+        type: string
+        default: "terraform/dev.tfvars"
+      provider_path:
+        description: "Path to provider.tf file"
+        required: false
+        type: string
+        default: "terraform/provider.tf"
+
+    secrets:
+      AZURE_CREDENTIALS:
+        description: "Azure credentials in JSON format"
+        required: true
+
+jobs:
+  Bump_Credentials:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Parse Azure Credentials and Update Files
+        run: |
+          # Parse JSON credentials
+          CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')
+          TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')
+
+          # Update dev.tfvars - replace credential values while preserving other content
+          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.tfvars_path }}"
+          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.tfvars_path }}"
+          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.tfvars_path }}"
+          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.tfvars_path }}"
+
+          # Update provider.tf - replace credential values in backend block while preserving other content
+          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.provider_path }}"
+          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.provider_path }}"
+          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.provider_path }}"
+          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.provider_path }}"
