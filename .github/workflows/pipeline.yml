@@ -359,6 +359,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ success() }}
     needs: wait-for-approval
+    outputs:
+      cluster_name: ${{ steps.tf-output.outputs.cluster_name }}
+      node_resource_group_name: ${{ steps.tf-output.outputs.node_resource_group_name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -385,18 +388,29 @@ jobs:
             VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
           terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
+
+      - name: Extract Terraform Outputs
+        id: tf-output
+        run: |
+          CLUSTER_NAME=$(terraform -chdir=${{ inputs.terraform_directory }} output -raw cluster_name)
+          NODE_RESOURCE_GROUP=$(terraform -chdir=${{ inputs.terraform_directory }} output -raw node_resource_group_name)
+          echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          echo "node_resource_group_name=$NODE_RESOURCE_GROUP" >> $GITHUB_OUTPUT
+          echo "Extracted cluster_name: $CLUSTER_NAME"
+          echo "Extracted node_resource_group_name: $NODE_RESOURCE_GROUP"
+
       - name: Close PR via CLI
         run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished applying Terraform changes. Closing the PR."
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-  # Get-Kubeconfig:
-  #   uses: opstella-playground/terraform-opstella/.github/workflows/get-kubeconfig.yml@main
-  #   needs: terraform-apply
-  #   with:
-  #     cluster_name: "opstella-aks-prod-001"
-  #     resource_group: "opstella-aks-prod-001-rg"
-  #   secrets:
-  #     AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  #     AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-  #     AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  Get-Kubeconfig:
+    uses: opstella-playground/terraform-opstella/.github/workflows/get-kubeconfig.yml@main
+    needs: terraform-apply
+    with:
+      cluster_name: ${{ needs.terraform-apply.outputs.cluster_name }}
+      resource_group: ${{ needs.terraform-apply.outputs.node_resource_group_name }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
