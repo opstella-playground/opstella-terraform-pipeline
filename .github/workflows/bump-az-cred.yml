@@ -1,31 +1,17 @@
 name: Bump Azure Credentials
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       tfvars_path:
         description: "Path to dev.tfvars file"
         required: false
         type: string
-        default: "terraform/dev.tfvars"
+        default: "terraform-bump-test/dev.tfvars"
       provider_path:
         description: "Path to provider.tf file"
         required: false
         type: string
-        default: "terraform/provider.tf"
-
-    secrets:
-      AZURE_CLIENT_ID:
-        description: "Azure Client ID"
-        required: true
-      AZURE_CLIENT_SECRET:
-        description: "Azure Client Secret"
-        required: true
-      AZURE_TENANT_ID:
-        description: "Azure Tenant ID"
-        required: true
-      AZURE_SUBSCRIPTION_ID:
-        description: "Azure Subscription ID"
-        required: true
+        default: "terraform-bump-test/provider.tf"
 
 jobs:
   Bump_Credentials:
@@ -53,3 +39,9 @@ jobs:
           sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.provider_path }}"
           sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.provider_path }}"
           sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.provider_path }}"
+      - name: Check updated files
+        run: |
+          echo "Updated tfvars file:"
+          cat "${{ inputs.tfvars_path }}"
+          echo "Updated provider.tf file:"
+          cat "${{ inputs.provider_path }}"
