@@ -432,7 +432,7 @@ jobs:
       cluster_name: ${{ needs.terraform-apply.outputs.cluster_name }}
       resource_group: ${{ needs.terraform-apply.outputs.node_resource_group_name }}
       runner_label: ${{ inputs.runner_label }}
+      azure_client_id: ${{ inputs.arm_client_id }}
+      azure_tenant_id: ${{ inputs.arm_tenant_id }}
     secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
