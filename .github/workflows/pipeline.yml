@@ -2,6 +2,11 @@ name: Opstella Before Gate Terraform pipeline
 on:
   workflow_call:
     inputs:
+      runner_label:
+        description: "The label of the runner to execute the pipeline on"
+        required: false
+        default: "gcloud-runner-set"
+        type: string
       trivy_iac_report_filename:
         description: "The filename for the Trivy IaC report"
         required: false
@@ -32,6 +37,11 @@ on:
         description: "Optional Terraform variables file path"
         required: false
         type: string
+
+      provider_file:
+        description: "Optional Terraform provider configuration file path"
+        required: false
+        type: string
       arm_client_id:
         description: "Azure Client ID for Terraform"
         required: true
@@ -58,7 +68,7 @@ env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
 jobs:
   mock-step:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     steps:
       - name: Hardcode Cluster Metadata for Testing
         run: |
@@ -80,7 +90,7 @@ jobs:
           retention-days: 14
   # Step1 : Terraform Format Check
   terraform-format:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always()}}
     steps:
       - name: Checkout repository
@@ -149,7 +159,7 @@ jobs:
 
   # Step2 : Terraform validate
   terraform-validate:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.terraform-format.result == 'success'}}
     needs: terraform-format
     steps:
@@ -180,7 +190,7 @@ jobs:
 
   # Step3 : TF Lint
   terraform-lint:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.terraform-validate.result == 'success'}}
     needs: terraform-validate
     steps:
@@ -214,7 +224,7 @@ jobs:
         run: ls -R ${{ inputs.terraform_directory }}
   # Step4 : Trivy IaC Scan
   Trivy-IAC-scan:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.terraform-lint.result == 'success'}}
     needs: terraform-lint
     steps:
@@ -249,7 +259,7 @@ jobs:
 
   # Step5 : Terraform Plan
   Terraform-plan:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.Trivy-IAC-scan.result == 'success'}}
     needs: Trivy-IAC-scan
     steps:
@@ -321,7 +331,7 @@ jobs:
       - *save-cache-terraform-providers
 
   wait-for-approval:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.Terraform-plan.result == 'success'}}
     needs: Terraform-plan
     steps:
@@ -362,7 +372,7 @@ jobs:
           gh pr edit $PR_NUMBER --remove-label "waiting-for-approval"
 
   terraform-apply:
-    runs-on: gcloud-runner-set
+    runs-on: ${{ inputs.runner_label }}
     if: ${{ success() }}
     needs: wait-for-approval
     outputs:
@@ -416,6 +426,7 @@ jobs:
     with:
       cluster_name: ${{ needs.terraform-apply.outputs.cluster_name }}
       resource_group: ${{ needs.terraform-apply.outputs.node_resource_group_name }}
+      runner_label: ${{ inputs.runner_label }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
