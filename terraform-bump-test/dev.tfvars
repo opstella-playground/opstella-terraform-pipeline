@@ -8,9 +8,8 @@ subscription_id = ""
 client_id       = ""
 client_secret   = ""
 project_prefix  = "opstapoc"
-# location        = "southeastasia"
 location    = "southeastasia"
-environment = "sbx" # Deployment environment of the application, workload, or service	dev / sit / stg / prd / sbx
+environment = "dev" # Deployment environment of the application, workload, or service	dev / sit / stg / prd / sbx
 # -- TAG --
 system_name              = "xxxx"          # Name of the workload the resource supports.	e.g. SuperDuper, Donut, MyAIS, etc
 commercial_name          = "xxx"           # Commercial name of the project	e.g. Mpay One, Paruay
