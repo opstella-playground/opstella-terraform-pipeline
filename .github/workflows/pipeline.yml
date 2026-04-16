@@ -32,17 +32,17 @@ on:
         description: "Optional Terraform variables file path"
         required: false
         type: string
-      ARM_CLIENT_ID:
+      arm_client_id:
         description: "Azure Client ID for Terraform"
         required: true
         type: string
 
-      ARM_TENANT_ID:
+      arm_tenant_id:
         description: "Azure Tenant ID for Terraform"
         required: true
         type: string
 
-      ARM_SUBSCRIPTION_ID:
+      arm_subscription_id:
         description: "Azure Subscription ID for Terraform"
         required: true
         type: string
@@ -113,10 +113,10 @@ jobs:
       - &bump-az-credential
         name: Update Azure Credentials in Terraform Files
         run: |
-          CLIENT_ID="${{ inputs.ARM_CLIENT_ID }}"
+          CLIENT_ID="${{ inputs.arm_client_id }}"
           CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}"
-          SUBSCRIPTION_ID="${{ inputs.ARM_SUBSCRIPTION_ID }}"
-          TENANT_ID="${{ inputs.ARM_TENANT_ID }}"
+          SUBSCRIPTION_ID="${{ inputs.arm_subscription_id }}"
+          TENANT_ID="${{ inputs.arm_tenant_id }}"
 
           # Update tfvars - replace credential values while preserving other content
           sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.var_file }}"
