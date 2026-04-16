@@ -327,12 +327,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Check if artifact exists
-        run: |
-          echo "Checking for Terraform plan artifact..."
-          gh run download ${{ github.run_id }} --name terraform-plan-output --dir ./artifact || { echo "Artifact not found! Exiting..."; exit 1; }
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Install GitHub CLI
         run: |
           (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
@@ -342,6 +337,12 @@ jobs:
           && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
           && sudo apt update \
           && sudo apt install gh -y
+      - name: Check if artifact exists
+        run: |
+          echo "Checking for Terraform plan artifact..."
+          gh run download ${{ github.run_id }} --name terraform-plan-output --dir ./artifact || { echo "Artifact not found! Exiting..."; exit 1; }
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Wait for PR Approval
         env:
