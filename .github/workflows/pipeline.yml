@@ -296,6 +296,7 @@ jobs:
           retention-days: ${{ inputs.report_retention_days }}
       - name: Install tfplan2md
         run: |
+          sudo apt-get update && sudo apt-get install -y wget
           VERSION="1.40.0"
           PLATFORM="linux-x64"
           wget https://github.com/oocx/tfplan2md/releases/download/v${VERSION}/tfplan2md_${VERSION}_${PLATFORM}.tar.gz
