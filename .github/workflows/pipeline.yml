@@ -67,27 +67,6 @@ on:
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
 jobs:
-  mock-step:
-    runs-on: ${{ inputs.runner_label }}
-    steps:
-      - name: Hardcode Cluster Metadata for Testing
-        run: |
-          cat <<EOF > cluster-metadata.json
-          {
-            "name": "opstella-aks-prod-001",
-            "host": "https://opstella-aks-prod-001-dns-7b2a9e.hcp.eastus.azmk8s.io",
-            "port": "",
-            "api-key": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ...",
-            "ca-cert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t..."
-          }
-          EOF
-
-      - name: Upload Metadata
-        uses: actions/upload-artifact@v4
-        with:
-          name: cluster-info-output
-          path: cluster-metadata.json
-          retention-days: 14
   # Step1 : Terraform Format Check
   terraform-format:
     runs-on: ${{ inputs.runner_label }}
@@ -95,6 +74,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - &setup-python
+        name: Setup Python for YAML processing
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
       - &create-plugin-cache-dir
         name: Create Plugin Cache Dir
@@ -166,6 +151,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - *setup-python
+
       - *create-plugin-cache-dir
 
       - *restore-cache-terraform-providers
@@ -197,6 +184,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - *setup-python
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -265,6 +253,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - *setup-python
 
       - *create-plugin-cache-dir
 
@@ -381,6 +371,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - *setup-python
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
