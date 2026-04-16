@@ -328,7 +328,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install GitHub CLI
+      - &install-github-cli
+        name: Install GitHub CLI
         run: |
           (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
           && sudo mkdir -p -m 755 /etc/apt/keyrings \
@@ -385,6 +386,7 @@ jobs:
 
       - *setup-python
 
+      - *install-github-cli
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
