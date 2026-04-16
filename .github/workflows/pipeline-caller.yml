@@ -8,7 +8,7 @@ on:
     types: [before-approve]
 jobs:
   check-secret-and-variables:
-    runs-on: ubuntu-latest
+    runs-on: gcloud-runner-set
     steps:
       - name: Check if GH_TOKEN secret working
         run: |
