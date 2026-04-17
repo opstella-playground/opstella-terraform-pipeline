@@ -38,10 +38,11 @@ on:
         required: false
         type: string
 
-      provider_file:
-        description: "Optional Terraform provider configuration file path"
+      backend_config_file:
+        description: "Backend config file for Terraform init (optional)"
         required: false
         type: string
+
       arm_client_id:
         description: "Azure Client ID for Terraform"
         required: true
@@ -91,7 +92,8 @@ jobs:
         with:
           path: |
             ${{ env.TF_PLUGIN_CACHE_DIR }}
-          key: ${{ runner.os }}-terraform-${{ hashFiles('terraform/.terraform.lock.hcl') }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('terraform/.terraform.lock.hcl')
+            }}
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -116,9 +118,16 @@ jobs:
           # sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.var_file }}"
           # sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.var_file }}"
 
-      - name: Terraform Init
+      - &terraform-init
+        name: Terraform Init
         run: |
-          terraform -chdir=${{ inputs.terraform_directory }} init -input=false
+          BACKEND_CONFIG=""
+          if [ -n "${{ inputs.backend_config_file }}" ]; then
+            # Use absolute path from workspace root
+            BACKEND_CONFIG_PATH="${{ github.workspace }}/${{ inputs.backend_config_file }}"
+            BACKEND_CONFIG="-backend-config=$BACKEND_CONFIG_PATH"
+          fi
+          terraform -chdir=${{ inputs.terraform_directory }} init $BACKEND_CONFIG -input=false
 
       - name: Terraform Format Check
         id: fmt
@@ -127,7 +136,8 @@ jobs:
 
       - &save-cache-terraform-providers
         name: Save Terraform Cache
-        if: steps.restore-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+        if: steps.restore-cache.outputs.cache-hit != 'true' && github.ref ==
+          'refs/heads/main'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -155,8 +165,7 @@ jobs:
           terraform_wrapper: false
 
       - *bump-az-credential
-      - name: Terraform Init (Link Plugins)
-        run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
+      - *terraform-init
       - name: Terraform Validate
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} validate || (echo "Error: Terraform validation failed." && exit 1)
@@ -169,7 +178,8 @@ jobs:
   # Step3 : TF Lint
   terraform-lint:
     runs-on: ${{ inputs.runner_label }}
-    if: ${{ !cancelled() && always() && needs.terraform-validate.result == 'success'}}
+    if: ${{ !cancelled() && always() && needs.terraform-validate.result ==
+      'success'}}
     needs: terraform-validate
     steps:
       - name: Checkout repository
@@ -254,8 +264,7 @@ jobs:
           terraform_wrapper: false
 
       - *bump-az-credential
-      - name: Terraform Init (Link Plugins)
-        run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
+      - *terraform-init
 
       - name: Terraform Plan
         run: |
@@ -279,7 +288,8 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output-json
-          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.json"
+          path: "${{ inputs.terraform_directory }}/${{
+            inputs.terraform_plan_output_filename }}.json"
           retention-days: ${{ inputs.report_retention_days }}
       - name: Install tfplan2md
         run: |
@@ -302,7 +312,8 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: terraform-plan-output
-          path: "${{ inputs.terraform_directory }}/${{ inputs.terraform_plan_output_filename }}.md"
+          path: "${{ inputs.terraform_directory }}/${{
+            inputs.terraform_plan_output_filename }}.md"
           retention-days: ${{ inputs.report_retention_days }}
 
       - *save-cache-terraform-providers
@@ -370,9 +381,7 @@ jobs:
       - *setup-token-for-git
 
       - *bump-az-credential
-      - name: Terraform Init
-        run: |
-          terraform -chdir=${{ inputs.terraform_directory }} init
+      - *terraform-init
 
       - name: Terraform Apply
         run: |
@@ -395,7 +404,8 @@ jobs:
           echo "Extracted node_resource_group_name: $NODE_RESOURCE_GROUP"
 
       - name: Close PR via CLI
-        run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished applying Terraform changes. Closing the PR."
+        run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished
+          applying Terraform changes. Closing the PR."
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
