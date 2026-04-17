@@ -5,7 +5,7 @@ on:
       runner_label:
         description: "The label of the runner to execute the pipeline on"
         required: false
-        default: "gcloud-runner-set"
+        default: "gcloud-runner-set-custom"
         type: string
       trivy_iac_report_filename:
         description: "The filename for the Trivy IaC report"
@@ -26,7 +26,7 @@ on:
       terraform_directory:
         description: "Directory containing Terraform configuration"
         required: false
-        default: "terraform"
+        default: "."
         type: string
       allow_failed_security_gate:
         description: "Allow pipeline to continue even if security gate fails"
@@ -64,8 +64,13 @@ on:
       ARM_CLIENT_SECRET:
         description: "Azure Client Secret"
         required: true
+
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+  ARM_CLIENT_ID: ${{ inputs.arm_client_id }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ inputs.arm_tenant_id }}
+  ARM_SUBSCRIPTION_ID: ${{ inputs.arm_subscription_id }}
 jobs:
   # Step1 : Terraform Format Check
   terraform-format:
@@ -102,22 +107,15 @@ jobs:
       - &bump-az-credential
         name: Update Azure Credentials in Terraform Files
         run: |
-          CLIENT_ID="${{ inputs.arm_client_id }}"
-          CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}"
           SUBSCRIPTION_ID="${{ inputs.arm_subscription_id }}"
           TENANT_ID="${{ inputs.arm_tenant_id }}"
 
           # Update tfvars - replace credential values while preserving other content
           sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.var_file }}"
           sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.var_file }}"
-          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.var_file }}"
+          # sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.var_file }}"
+          # sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.var_file }}"
 
-          # Update provider.tf - replace credential values in backend block while preserving other content
-          sed -i "s/subscription_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/subscription_id = \"$SUBSCRIPTION_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/tenant_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/tenant_id       = \"$TENANT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/client_id[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_id       = \"$CLIENT_ID\"/" "${{ inputs.terraform_directory }}/provider.tf"
-          sed -i "s/client_secret[[:space:]]*=[[:space:]]*\"[^\"]*\"/client_secret   = \"$CLIENT_SECRET\"/" "${{ inputs.terraform_directory }}/provider.tf"
       - name: Terraform Init
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} init -input=false
@@ -210,8 +208,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # - *setup-ssh-for-git
 
       - name: Install Helm
         uses: azure/setup-helm@v4
