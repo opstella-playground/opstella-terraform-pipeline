@@ -75,12 +75,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - &setup-python
-        name: Setup Python for YAML processing
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
       - &create-plugin-cache-dir
         name: Create Plugin Cache Dir
         run: mkdir -p $TF_PLUGIN_CACHE_DIR
@@ -151,8 +145,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *setup-python
-
       - *create-plugin-cache-dir
 
       - *restore-cache-terraform-providers
@@ -163,6 +155,7 @@ jobs:
         with:
           terraform_version: 1.5.7
           terraform_wrapper: false
+
       - *bump-az-credential
       - name: Terraform Init (Link Plugins)
         run: terraform -chdir=${{ inputs.terraform_directory }} init -input=false
@@ -184,7 +177,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *setup-python
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -236,7 +228,6 @@ jobs:
           exit-code: ${{ inputs.allow_failed_security_gate == true && '0' || '1' }}
           severity: "HIGH,CRITICAL"
 
-        # ${{ inputs.sourcecode_repo }}-manifest.yaml
       - name: Upload Trivy IaC Report
         uses: actions/upload-artifact@v6
         with:
@@ -253,8 +244,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - *setup-python
 
       - *create-plugin-cache-dir
 
@@ -282,10 +271,12 @@ jobs:
           fi
           terraform plan -out=plan.tfplan $VAR_FILE_ARGS || exit 1
         working-directory: ./${{ inputs.terraform_directory }}
+
       - name: Terraform form Plan Output
         run: |
           terraform show -json plan.tfplan > "${{ inputs.terraform_plan_output_filename }}.json"
         working-directory: ./${{ inputs.terraform_directory }}
+
       - name: list files
         run: ls -R ${{ inputs.terraform_directory }}
       - name: Upload Terraform Plan Output
@@ -328,16 +319,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - &install-github-cli
-        name: Install GitHub CLI
-        run: |
-          (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
-          && sudo mkdir -p -m 755 /etc/apt/keyrings \
-          && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
-          && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-          && sudo apt update \
-          && sudo apt install gh -y
       - name: Check if artifact exists
         run: |
           echo "Checking for Terraform plan artifact..."
@@ -384,9 +365,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *setup-python
-
-      - *install-github-cli
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
