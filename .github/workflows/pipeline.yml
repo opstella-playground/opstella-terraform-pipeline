@@ -243,7 +243,7 @@ jobs:
           retention-days: ${{ inputs.report_retention_days }}
 
   # Step5 : Terraform Plan
-  Terraform-plan:
+  terraform-plan:
     runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.Trivy-IAC-scan.result == 'success'}}
     needs: Trivy-IAC-scan
@@ -257,6 +257,12 @@ jobs:
 
       - *setup-token-for-git
 
+      - &setup-python
+        name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -264,6 +270,7 @@ jobs:
           terraform_wrapper: false
 
       - *bump-az-credential
+
       - *terraform-init
 
       - name: Terraform Plan
@@ -320,8 +327,8 @@ jobs:
 
   wait-for-approval:
     runs-on: ${{ inputs.runner_label }}
-    if: ${{ !cancelled() && always() && needs.Terraform-plan.result == 'success'}}
-    needs: Terraform-plan
+    if: ${{ !cancelled() && always() && needs.terraform-plan.result == 'success'}}
+    needs: terraform-plan
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -372,6 +379,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - *setup-python
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -381,6 +390,7 @@ jobs:
       - *setup-token-for-git
 
       - *bump-az-credential
+
       - *terraform-init
 
       - name: Terraform Apply
@@ -409,7 +419,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-  Get-Kubeconfig:
+  get-kubeconfig:
     uses: opstella-playground/opstella-terraform-opstapoc/.github/workflows/get-kubeconfig.yml@main
     needs: terraform-apply
     with:
