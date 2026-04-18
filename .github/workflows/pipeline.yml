@@ -182,14 +182,21 @@ jobs:
 
       - *terraform-init
 
+      - name: Verify init output exists
+        run: |
+          ls -la "${{ github.workspace }}/${{ inputs.terraform_directory }}"
+          test -d "${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform"
+          test -f "${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform.lock.hcl"
+
       - name: Upload initialized Terraform data
         uses: actions/upload-artifact@v6
         with:
           name: terraform-init-data
           path: |
-            ${{ inputs.terraform_directory }}/.terraform
-            ${{ inputs.terraform_directory }}/.terraform.lock.hcl
+            ${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform
+            ${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform.lock.hcl
           retention-days: ${{ inputs.report_retention_days }}
+          include-hidden-files: true
 
       - *save-cache-terraform-providers
 
