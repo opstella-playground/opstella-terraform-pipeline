@@ -88,6 +88,7 @@ jobs:
   # Step1 : Terraform Format Check
   terraform-format:
     runs-on: ${{ inputs.runner_label }}
+    needs: check-secret-and-variables
     if: ${{ !cancelled() && always()}}
     steps:
       - name: Checkout repository
