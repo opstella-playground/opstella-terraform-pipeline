@@ -1,4 +1,4 @@
-name: Opstella Before Gate Terraform pipeline
+name: Opstella Terraform pipeline
 on:
   workflow_call:
     inputs:
@@ -73,7 +73,7 @@ env:
   ARM_TENANT_ID: ${{ inputs.arm_tenant_id }}
   ARM_SUBSCRIPTION_ID: ${{ inputs.arm_subscription_id }}
 jobs:
-  # Check if the required secrets and variables are set before starting the pipeline
+
   check-secret-and-variables:
     runs-on: ${{ inputs.runner_label }}
     steps:
@@ -89,7 +89,6 @@ jobs:
   terraform-format:
     runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always()}}
-    needs: check-secret-and-variables
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -157,8 +156,8 @@ jobs:
             ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
 
-  # Shared init job to avoid repeating terraform init in every downstream job
-  terraform-init:
+  # Step2 : Terraform validate
+  terraform-validate:
     runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.terraform-format.result == 'success'}}
     needs: terraform-format
@@ -170,64 +169,15 @@ jobs:
 
       - *restore-cache-terraform-providers
 
+      - *setup-token-for-git
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      - *setup-token-for-git
-
       - *bump-az-credential
-
       - *terraform-init
-
-      - name: Verify init output exists
-        run: |
-          ls -la "${{ github.workspace }}/${{ inputs.terraform_directory }}"
-          test -d "${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform"
-          test -f "${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform.lock.hcl"
-
-      - name: Upload initialized Terraform data
-        uses: actions/upload-artifact@v6
-        with:
-          name: terraform-init-data
-          path: |
-            ${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform
-            ${{ github.workspace }}/${{ inputs.terraform_directory }}/.terraform.lock.hcl
-          retention-days: ${{ inputs.report_retention_days }}
-          include-hidden-files: true
-
-      - *save-cache-terraform-providers
-
-  # Step2 : Terraform validate
-  terraform-validate:
-    runs-on: ${{ inputs.runner_label }}
-    if: ${{ !cancelled() && always() && needs.terraform-init.result == 'success'}}
-    needs: terraform-init
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - &download-terraform-init-data
-        name: Download initialized Terraform data
-        uses: actions/download-artifact@v6
-        with:
-          name: terraform-init-data
-          path: ${{ inputs.terraform_directory }}
-
-      - *create-plugin-cache-dir
-
-      - *restore-cache-terraform-providers
-
-      - *setup-token-for-git
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-          terraform_wrapper: false
-
-      - *bump-az-credential
       - name: Terraform Validate
         run: |
           terraform -chdir=${{ inputs.terraform_directory }} validate || (echo "Error: Terraform validation failed." && exit 1)
@@ -308,14 +258,10 @@ jobs:
   terraform-plan:
     runs-on: ${{ inputs.runner_label }}
     if: ${{ !cancelled() && always() && needs.Trivy-IAC-scan.result == 'success'}}
-    needs:
-      - Trivy-IAC-scan
-      - terraform-init
+    needs: Trivy-IAC-scan
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - *download-terraform-init-data
 
       - *create-plugin-cache-dir
 
@@ -336,6 +282,8 @@ jobs:
           terraform_wrapper: false
 
       - *bump-az-credential
+
+      - *terraform-init
 
       - name: Terraform Plan
         run: |
@@ -373,6 +321,11 @@ jobs:
           ./tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
           ls -l "${{ inputs.terraform_plan_output_filename }}.md"
         working-directory: ./${{ inputs.terraform_directory }}
+      # - name: Generate Markdown Report from Terraform Plan
+      #   run: |
+      #     tfplan2md "${{ inputs.terraform_plan_output_filename }}.json" -o "${{ inputs.terraform_plan_output_filename }}.md"
+      #     ls -l "${{ inputs.terraform_plan_output_filename }}.md"
+      #   working-directory: ./${{ inputs.terraform_directory }}
 
       - name: Upload Terraform Plan Output
         uses: actions/upload-artifact@v6
@@ -438,8 +391,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *download-terraform-init-data
-
       - *setup-python
 
       - name: Set up Terraform
@@ -451,6 +402,8 @@ jobs:
       - *setup-token-for-git
 
       - *bump-az-credential
+
+      - *terraform-init
 
       - name: Terraform Apply
         run: |
