@@ -409,7 +409,7 @@ jobs:
             VAR_FILE_PATH="${{ github.workspace }}/${{ inputs.var_file }}"
             VAR_FILE_ARGS="-var-file=$VAR_FILE_PATH"
           fi
-          terraform -chdir=${{ inputs.terraform_directory }} apply -auto-approve $VAR_FILE_ARGS
+          terraform -chdir=${{ inputs.terraform_directory }} apply -parallelism=1 -auto-approve $VAR_FILE_ARGS
 
       - name: Extract Terraform Outputs
         id: tf-output
