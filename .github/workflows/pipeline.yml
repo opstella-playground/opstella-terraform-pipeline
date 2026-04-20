@@ -107,11 +107,11 @@ jobs:
             ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ runner.os }}-terraform-${{ hashFiles('terraform/.terraform.lock.hcl')
             }}
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-          terraform_wrapper: false
+      # - name: Set up Terraform
+      #   uses: hashicorp/setup-terraform@v2
+      #   with:
+      #     terraform_version: 1.5.7
+      #     terraform_wrapper: false
 
       - &setup-token-for-git
         name: Configure Git with GitHub PAT
@@ -171,11 +171,11 @@ jobs:
       - *restore-cache-terraform-providers
 
       - *setup-token-for-git
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-          terraform_wrapper: false
+      # - name: Set up Terraform
+      #   uses: hashicorp/setup-terraform@v2
+      #   with:
+      #     terraform_version: 1.5.7
+      #     terraform_wrapper: false
 
       - *bump-az-credential
       - *terraform-init
@@ -198,11 +198,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-          terraform_wrapper: false
+      # - name: Set up Terraform
+      #   uses: hashicorp/setup-terraform@v2
+      #   with:
+      #     terraform_version: 1.5.7
+      #     terraform_wrapper: false
 
       - *restore-cache-terraform-providers
 
@@ -232,8 +232,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Helm
-        uses: azure/setup-helm@v4
+      # - name: Install Helm
+      #   uses: azure/setup-helm@v4
 
       - name: Generate Trivy IaC Vulnerability Report
         uses: aquasecurity/trivy-action@0.35.0
@@ -270,17 +270,17 @@ jobs:
 
       - *setup-token-for-git
 
-      - &setup-python
-        name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
+      # - &setup-python
+      #   name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: "3.x"
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-          terraform_wrapper: false
+      # - name: Set up Terraform
+      #   uses: hashicorp/setup-terraform@v2
+      #   with:
+      #     terraform_version: 1.5.7
+      #     terraform_wrapper: false
 
       - *bump-az-credential
 
@@ -387,13 +387,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *setup-python
+      # - *setup-python
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-          terraform_wrapper: false
+      # - name: Set up Terraform
+      #   uses: hashicorp/setup-terraform@v2
+      #   with:
+      #     terraform_version: 1.5.7
+      #     terraform_wrapper: false
 
       - *setup-token-for-git
 
