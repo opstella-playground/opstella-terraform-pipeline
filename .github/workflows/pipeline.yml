@@ -58,7 +58,7 @@ on:
         required: true
         type: string
 
-      GH_APP_ID:
+      app_id:
         description: "GitHub App Client ID used to generate installation tokens"
         required: true
         type: string
@@ -84,8 +84,8 @@ jobs:
     steps:
       - name: Check if GitHub App configuration is set
         run: |
-          if [ -z "${{ inputs.GH_APP_ID }}" ]; then
-            echo "Error: GH_APP_ID input is not set. Exiting..."
+          if [ -z "${{ inputs.app_id }}" ]; then
+            echo "Error: app_id input is not set. Exiting..."
             exit 1
           fi
 
@@ -128,7 +128,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ inputs.GH_APP_ID }}
+          app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_PRIVATE_KEY }}
 
       - &setup-token-for-git
