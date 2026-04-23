@@ -132,6 +132,7 @@ jobs:
         with:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.GH_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
 
       - &setup-token-for-git
         name: Configure Git with GitHub App token
@@ -258,6 +259,8 @@ jobs:
       #   uses: azure/setup-helm@v4
 
       - *create-github-app-token
+
+      - *setup-token-for-git
 
       - *terraform-init
 
