@@ -123,18 +123,6 @@ jobs:
       #     terraform_version: 1.5.7
       #     terraform_wrapper: false
 
-      - &decode-private-key
-        name: Decode the GitHub App Private Key
-        id: decode
-        run: |
-          private_key=$(echo "${{ secrets.GH_PRIVATE_KEY }}" | base64 -d)
-          echo "::add-mask::$private_key"
-          {
-            echo "private-key<<EOF"
-            echo "$private_key"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
       - &create-github-app-token
         name: Create GitHub App installation token
         id: app-token
@@ -143,7 +131,7 @@ jobs:
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ inputs.app_id }}
-          private-key: ${{ steps.decode.outputs.private-key }}
+          private-key: ${{ secrets.GH_PRIVATE_KEY }}
 
       - &setup-token-for-git
         name: Configure Git with GitHub App token
@@ -200,8 +188,6 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - *decode-private-key
-
       - *create-github-app-token
 
       - *setup-token-for-git
@@ -240,8 +226,6 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - *decode-private-key
-
       - *create-github-app-token
 
       - *setup-token-for-git
@@ -272,8 +256,6 @@ jobs:
 
       # - name: Install Helm
       #   uses: azure/setup-helm@v4
-
-      - *decode-private-key
 
       - *create-github-app-token
 
@@ -311,8 +293,6 @@ jobs:
       - *create-plugin-cache-dir
 
       - *restore-cache-terraform-providers
-
-      - *decode-private-key
 
       - *create-github-app-token
 
@@ -389,8 +369,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *decode-private-key
-
       - *create-github-app-token
 
       - name: Check if artifact exists
@@ -446,8 +424,6 @@ jobs:
       #   with:
       #     terraform_version: 1.5.7
       #     terraform_wrapper: false
-
-      - *decode-private-key
 
       - *create-github-app-token
 
