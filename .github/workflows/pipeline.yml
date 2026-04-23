@@ -126,6 +126,8 @@ jobs:
       - &create-github-app-token
         name: Create GitHub App installation token
         id: app-token
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ inputs.app_id }}
