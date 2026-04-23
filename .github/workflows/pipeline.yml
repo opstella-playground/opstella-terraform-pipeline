@@ -454,7 +454,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
   get-kubeconfig:
-    uses: opstella-playground/opstella-terraform-pipeline/.github/workflows/get-kubeconfig.yml@main
+    uses: opstella-playground/opstella-terraform-opstapoc/.github/workflows/get-kubeconfig.yml@main
     needs: terraform-apply
     with:
       cluster_name: ${{ needs.terraform-apply.outputs.cluster_name }}
