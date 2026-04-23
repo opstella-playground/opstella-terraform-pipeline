@@ -58,14 +58,9 @@ on:
         required: true
         type: string
 
-      client_id:
-        description: "GitHub App ID used to generate installation tokens"
-        required: true
-        type: string
-
     secrets:
-      GH_PRIVATE_KEY:
-        description: "GitHub App private key used to generate installation tokens"
+      GH_TOKEN:
+        description: "GitHub Token with repo access"
         required: true
       ARM_CLIENT_SECRET:
         description: "Azure Client Secret"
@@ -82,18 +77,13 @@ jobs:
   check-secret-and-variables:
     runs-on: ${{ inputs.runner_label }}
     steps:
-      - name: Check if GitHub App configuration is set
+      - name: Check if GH_TOKEN secret working
         run: |
-          if [ -z "${{ inputs.client_id }}" ]; then
-            echo "Error: client_id input is not set. Exiting..."
-            exit 1
-          fi
-
-          if [ -z "${{ secrets.GH_PRIVATE_KEY }}" ]; then
-            echo "Error: GH_PRIVATE_KEY secret is not set. Exiting..."
+          if [ -z "${{ secrets.GH_TOKEN }}" ]; then
+            echo "Error: GH_TOKEN secret is not set. Exiting..."
             exit 1
           else
-            echo "GitHub App configuration is set."
+            echo "GH_TOKEN secret is set."
           fi
   # Step1 : Terraform Format Check
   terraform-format:
@@ -123,18 +113,12 @@ jobs:
       #     terraform_version: 1.5.7
       #     terraform_wrapper: false
 
-      - &create-github-app-token
-        name: Create GitHub App installation token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ inputs.client_id }}
-          private-key: ${{ secrets.GH_PRIVATE_KEY }}
-
       - &setup-token-for-git
-        name: Configure Git with GitHub App token
+        name: Configure Git with GitHub PAT
         run: |
-          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
       - &bump-az-credential
         name: Update Azure Credentials in Terraform Files
         run: |
@@ -186,8 +170,6 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - *create-github-app-token
-
       - *setup-token-for-git
       # - name: Set up Terraform
       #   uses: hashicorp/setup-terraform@v2
@@ -224,8 +206,6 @@ jobs:
 
       - *restore-cache-terraform-providers
 
-      - *create-github-app-token
-
       - *setup-token-for-git
       - name: Install tflint
         run: |
@@ -237,7 +217,7 @@ jobs:
           tflint --init --force || true
           tflint -f compact --force || true
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - *save-cache-terraform-providers
 
@@ -287,8 +267,6 @@ jobs:
       - *create-plugin-cache-dir
 
       - *restore-cache-terraform-providers
-
-      - *create-github-app-token
 
       - *setup-token-for-git
 
@@ -363,18 +341,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - *create-github-app-token
-
       - name: Check if artifact exists
         run: |
           echo "Checking for Terraform plan artifact..."
           gh run download ${{ github.run_id }} --name terraform-plan-output --dir ./artifact || { echo "Artifact not found! Exiting..."; exit 1; }
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Wait for PR Approval
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Waiting for the 'deploy-to-cd' label on PR #$PR_NUMBER..."
@@ -419,8 +395,6 @@ jobs:
       #     terraform_version: 1.5.7
       #     terraform_wrapper: false
 
-      - *create-github-app-token
-
       - *setup-token-for-git
 
       - *bump-az-credential
@@ -451,7 +425,7 @@ jobs:
         run: gh pr close ${{ github.event.pull_request.number }} --comment "Finished
           applying Terraform changes. Closing the PR."
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
   get-kubeconfig:
     uses: opstella-playground/opstella-terraform-opstapoc/.github/workflows/get-kubeconfig.yml@main
